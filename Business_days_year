@@ -1,0 +1,42 @@
+# prompt: Write a function that creates a data frame with all of the business days in 2025 excluding US holidays
+
+import pandas as pd
+from pandas.tseries.holiday import USFederalHolidayCalendar
+
+def create_business_days_dataframe(year):
+    """
+    Creates a DataFrame with all business days in a given year, excluding US holidays.
+
+    Args:
+        year: The year for which to generate the business days.
+
+    Returns:
+        A pandas DataFrame with a DatetimeIndex representing business days.
+        Returns None if an error occurs.
+    """
+    try:
+        # Create a DatetimeIndex for all days in the year
+        all_days = pd.date_range(start=f"{year}-01-01", end=f"{year}-12-31")
+
+        # Create a DataFrame with the DatetimeIndex
+        df = pd.DataFrame(index=all_days)
+
+        # Create a USFederalHolidayCalendar
+        cal = USFederalHolidayCalendar()
+
+        # Get holidays for the specified year
+        holidays = cal.holidays(start=f"{year}-01-01", end=f"{year}-12-31")
+
+        # Filter out holidays and weekends
+        df['is_business_day'] = True  # Initialize all days as business days
+        df.loc[holidays, 'is_business_day'] = False  # Mark holidays as non-business days
+        df.loc[df.index.weekday >= 5, 'is_business_day'] = False #Mark weekends as non-business days
+
+        # Return only the business days
+        business_days_df = df[df['is_business_day']]
+        business_days_df = business_days_df.drop('is_business_day',axis=1)
+        return business_days_df
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
